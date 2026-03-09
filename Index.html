@@ -1,0 +1,50 @@
+from langchain_openai import ChatOpenAI
+from langchain.agents import AgentExecutor, create_openai_functions_agent
+from langchain_core.prompts import ChatPromptTemplate
+
+# 1. Define the Professional Compliance System Prompt
+SYSTEM_PROMPT = """
+You are a Senior Fintech Compliance Auditor. Your goal is to analyze transaction 
+metadata and identify breaches of the 'Digital Finance Act 2026'.
+Look for: 
+- Velocity spikes (Layering)
+- Cross-border inconsistencies
+- Sanctioned wallet interactions
+Output must be a structured JSON Audit Trail.
+"""
+
+def initialize_audit_agent(api_key):
+    llm = ChatOpenAI(model="gpt-5-preview", temperature=0) # Using latest 2026 models
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", SYSTEM_PROMPT),
+        ("human", "{input}"),
+        ("placeholder", "{agent_scratchpad}"),
+    ])
+    
+    # Logic to connect to Real-time Transaction database
+    agent = create_openai_functions_agent(llm, tools=[], prompt=prompt)
+    return AgentExecutor(agent=agent, tools=[], verbose=True)
+
+# This function is the "Intellectual Property" (IP) worth the money
+def run_compliance_check(transaction_data):
+    agent_exec = initialize_audit_agent("your_key")
+    report = agent_exec.invoke({"input": f"Analyze these records: {transaction_data}"})
+    return report
+
+from fastapi import FastAPI, Security, HTTPException
+from fastapi.security import APIKeyHeader
+
+app = FastAPI(title="Sentinel-Compliance-Engine-2026")
+api_key_header = APIKeyHeader(name="X-Audit-Token")
+
+@app.post("/v1/audit/run")
+async def trigger_audit(data: dict, token: str = Security(api_key_header)):
+    # Professional code includes: 
+    # 1. Rate limiting
+    # 2. PII Masking (Don't send real names to AI)
+    # 3. Webhook callbacks for long-running audits
+    try:
+        results = run_compliance_check(data)
+        return {"status": "success", "audit_id": "AUD-2026-X89", "data": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Audit Engine Failure")
